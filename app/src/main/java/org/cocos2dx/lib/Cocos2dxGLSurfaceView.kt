@@ -594,7 +594,7 @@ choreographer.removeFrameCallback(this)
     cocosEventQueue.add(r)
     }
 
-	fun doFrame(frameTimeNanos: Long){
+	override fun doFrame(frameTimeNanos: Long){
     
     	val buffer = cocosEventQueue
     
