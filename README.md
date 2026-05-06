@@ -1,4 +1,4 @@
-Hope it wouldn't like last time
+Hope it wouldn't be like last time
 # Geode Android Launcher
 
 Launches a vanilla copy of Geometry Dash with the Geode loader added.
