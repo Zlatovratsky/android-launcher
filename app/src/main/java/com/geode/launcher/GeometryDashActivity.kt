@@ -584,7 +584,7 @@ class GeometryDashActivity : AppCompatActivity(), Cocos2dxHelper.Cocos2dxHelperL
     }
 
     override fun runOnGLThread(runnable: Runnable) {
-        mGLSurfaceView?.queueEvent(runnable)
+        mGLSurfaceView?.queueCocosEvent(runnable)
     }
 
     override fun showDialog(title: String, message: String) {
