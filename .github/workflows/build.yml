@@ -41,7 +41,7 @@ jobs:
       with:
         name: geode-launcher-${{ matrix.config.lower }}
         path: |
-          ${{github.workspace}}/app/build/outputs/apk/${{ matrix.config.lower }}/unsigned-app-universal-${{ matrix.config.lower }}.apk
+          ${{github.workspace}}/app/build/outputs/apk/${{ matrix.config.lower }}/app-universal-${{ matrix.config.lower }}-unsigned.apk
 
           ${{ steps.rename_apk.outputs.path }}
           ${{ steps.rename_mappings.outputs.path }}
