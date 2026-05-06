@@ -12,10 +12,10 @@ jobs:
         config:
         - name: Release
           lower: release
-          
+
         - name: Debug
           lower: debug
-          
+
     runs-on: ubuntu-latest
 
     steps:
@@ -28,15 +28,12 @@ jobs:
         distribution: temurin
         cache: gradle
 
-    - name: Generate keystore file
-      run: echo ${{secrets.KEYSTORE_FILE}} | base64 -d > ~/release.keystore
-
     - name: Fix gradle permissions
       run: chmod +x ./gradlew
 
     - name: Build project
       run: |
-        ./gradlew app:assemble
+        ./gradlew app:assemble${{ matrix.config.name }} 
 
     - name: Rename universal apk
       id: rename_apk_universal
