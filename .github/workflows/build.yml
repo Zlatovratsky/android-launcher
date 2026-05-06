@@ -28,12 +28,19 @@ jobs:
         distribution: temurin
         cache: gradle
 
+    - name: Generate keystore file
+      run: echo ${{secrets.KEYSTORE_FILE}} | base64 -d > ~/release.keystore
+
     - name: Fix gradle permissions
       run: chmod +x ./gradlew
 
     - name: Build project
       run: |
-        ./gradlew app:assemble
+        ./gradlew app:assemble${{ matrix.config.name }} \
+          -Pandroid.injected.signing.store.file="$HOME/release.keystore" \
+          -Pandroid.injected.signing.store.password="${{secrets.KEYSTORE_PASSWORD}}" \
+          -Pandroid.injected.signing.key.alias="${{secrets.KEY_ALIAS}}" \
+          -Pandroid.injected.signing.key.password="${{secrets.KEY_PASSWORD}}"
 
     - name: Rename universal apk
       id: rename_apk_universal
