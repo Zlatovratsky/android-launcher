@@ -3,14 +3,12 @@ package org.cocos2dx.lib
 import android.app.Activity
 import android.content.Context
 import android.hardware.input.InputManager
-import android.opengl.GLSurfaceView
+import org.cocos2dx.lib.GLSurfaceView
 import android.os.Build
 import android.os.Handler
 import android.os.Looper
 import android.os.Message
 import android.util.Log
-import android.view.Choreographer
-import android.view.Choreographer.FrameCallback
 import android.view.InputDevice
 import android.view.KeyEvent
 import android.view.MotionEvent
@@ -20,7 +18,6 @@ import androidx.annotation.RequiresApi
 import androidx.appcompat.widget.AppCompatEditText
 import com.customRobTop.BaseRobTopActivity
 import com.geode.launcher.utils.GeodeUtils
-import java.util.ArrayDeque
 import kotlin.math.abs
 
 private const val HANDLER_OPEN_IME_KEYBOARD = 2
@@ -28,7 +25,7 @@ private const val HANDLER_CLOSE_IME_KEYBOARD = 3
 private const val MS_TO_NS = 1_000_000
 private const val SEC_TO_NS = 1_000_000_000.0
 
-class Cocos2dxGLSurfaceView(context: Context) : GLSurfaceView(context), Choreographer.FrameCallback {
+class Cocos2dxGLSurfaceView(context: Context) : GLSurfaceView(context) {
     companion object {
         lateinit var cocos2dxGLSurfaceView: Cocos2dxGLSurfaceView
         private lateinit var handler: Handler
@@ -50,7 +47,7 @@ class Cocos2dxGLSurfaceView(context: Context) : GLSurfaceView(context), Choreogr
         }
 
         fun queueAccelerometer(x: Float, y: Float, z: Float, timestamp: Long) =
-            cocos2dxGLSurfaceView.queueCocosEvent {
+            cocos2dxGLSurfaceView.queueEvent {
                 Cocos2dxAccelerometer.onSensorChanged(x, y, z, timestamp)
             }
     }
@@ -149,15 +146,15 @@ class Cocos2dxGLSurfaceView(context: Context) : GLSurfaceView(context), Choreogr
     }
 
     override fun onPause() {
-        queueCocosEvent { cocos2dxRenderer.handleOnPause() }
-choreographer.removeFrameCallback(this)
+        queueEvent { cocos2dxRenderer.handleOnPause() }
+        renderMode = RENDERMODE_WHEN_DIRTY
         super.onPause()
     }
 
     override fun onResume() {
         super.onResume()
-        choreographer.postFrameCallback(this)
-        queueCocosEvent { cocos2dxRenderer.handleOnResume() }
+        renderMode = RENDERMODE_CONTINUOUSLY
+        queueEvent { cocos2dxRenderer.handleOnResume() }
     }
 
     private fun sendNextEventTimestamp(timestamp: Long) {
@@ -184,7 +181,7 @@ choreographer.removeFrameCallback(this)
                 val idDown = motionEvent.getPointerId(0)
                 val xDown = xs[0]
                 val f = ys[0]
-                queueCocosEvent {
+                queueEvent {
                     sendNextEventTimestamp(timestamp)
 
                     if (controllerEventsEnabled)
@@ -202,7 +199,7 @@ choreographer.removeFrameCallback(this)
                 val idUp = motionEvent.getPointerId(0)
                 val f2 = xs[0]
                 val f3 = ys[0]
-                queueCocosEvent {
+                queueEvent {
                     sendNextEventTimestamp(timestamp)
 
                     if (controllerEventsEnabled)
@@ -216,7 +213,7 @@ choreographer.removeFrameCallback(this)
                 true
             }
             MotionEvent.ACTION_MOVE -> {
-                queueCocosEvent {
+                queueEvent {
                     sendNextEventTimestamp(timestamp)
 
                     if (controllerEventsEnabled)
@@ -230,7 +227,7 @@ choreographer.removeFrameCallback(this)
                 true
             }
             MotionEvent.ACTION_CANCEL -> {
-                queueCocosEvent {
+                queueEvent {
                     sendNextEventTimestamp(timestamp)
 
                     if (controllerEventsEnabled)
@@ -248,7 +245,7 @@ choreographer.removeFrameCallback(this)
                 val idPointerDown = motionEvent.getPointerId(indexPointerDown)
                 val xPointerDown = motionEvent.getX(indexPointerDown)
                 val y = motionEvent.getY(indexPointerDown)
-                queueCocosEvent {
+                queueEvent {
                     sendNextEventTimestamp(timestamp)
 
                     if (controllerEventsEnabled)
@@ -266,7 +263,7 @@ choreographer.removeFrameCallback(this)
                 val idPointerUp = motionEvent.getPointerId(indexPointUp)
                 val xPointerUp = motionEvent.getX(indexPointUp)
                 val y2 = motionEvent.getY(indexPointUp)
-                queueCocosEvent {
+                queueEvent {
                     sendNextEventTimestamp(timestamp)
 
                     if (controllerEventsEnabled)
@@ -306,7 +303,7 @@ choreographer.removeFrameCallback(this)
                 if (keyEvent.repeatCount != 0 || BaseRobTopActivity.blockBackButton) {
                     return true
                 }
-                queueCocosEvent { cocos2dxRenderer.handleKeyDown(keyCode) }
+                queueEvent { cocos2dxRenderer.handleKeyDown(keyCode) }
                 true
             }
             else -> super.onKeyDown(keyCode, keyEvent)
@@ -323,7 +320,7 @@ choreographer.removeFrameCallback(this)
         }
 
         val currentTime = System.nanoTime()
-        queueCocosEvent {
+        queueEvent {
             sendNextEventTimestamp(currentTime)
 
             if (controllerEventsEnabled) {
@@ -371,7 +368,7 @@ choreographer.removeFrameCallback(this)
                     return true
                 }
 
-                queueCocosEvent {
+                queueEvent {
                     sendNextEventTimestamp(event.eventTime * MS_TO_NS)
 
                     if (useKeyboardEvents) {
@@ -401,7 +398,7 @@ choreographer.removeFrameCallback(this)
                     return true
                 }
 
-                queueCocosEvent {
+                queueEvent {
                     sendNextEventTimestamp(event.eventTime * MS_TO_NS)
 
                     if (useKeyboardEvents) {
@@ -488,7 +485,7 @@ choreographer.removeFrameCallback(this)
             val timestamp = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE)
                 event.eventTimeNanos else event.eventTime * MS_TO_NS
 
-            queueCocosEvent {
+            queueEvent {
                 sendNextEventTimestamp(timestamp)
 
                 if (useKeyboardEvents) {
@@ -515,7 +512,7 @@ choreographer.removeFrameCallback(this)
             val timestamp = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE)
                 event.eventTimeNanos else event.eventTime * MS_TO_NS
 
-            queueCocosEvent {
+            queueEvent {
                 GeodeUtils.internalJoystickEvent(
                     timestamp, event.deviceId, event.source,
                     motionLeftX, motionLeftY,
@@ -534,7 +531,6 @@ choreographer.removeFrameCallback(this)
     fun setCocos2dxRenderer(renderer: Cocos2dxRenderer) {
         this.cocos2dxRenderer = renderer
         setRenderer(this.cocos2dxRenderer)
-        setRenderMode(RENDERMODE_WHEN_DIRTY)
     }
 
     private fun getContentText(): String {
@@ -542,11 +538,11 @@ choreographer.removeFrameCallback(this)
     }
 
     fun insertText(text: String) {
-        queueCocosEvent { cocos2dxRenderer.handleInsertText(text) }
+        queueEvent { cocos2dxRenderer.handleInsertText(text) }
     }
 
     fun deleteBackward() {
-        queueCocosEvent { cocos2dxRenderer.handleDeleteBackward() }
+        queueEvent { cocos2dxRenderer.handleDeleteBackward() }
     }
 
     fun enableControllerEvents() {
@@ -583,34 +579,5 @@ choreographer.removeFrameCallback(this)
         override fun onInputDeviceRemoved(deviceId: Int) {
             GeodeUtils.inputDeviceRemoved(deviceId)
         }
-    }
-        @Volatile
-	var glEventQueue = ArrayDeque<Runnable>(10)
-	
- 	var cocosEventQueue = ArrayDeque<Runnable>(10)
-	val choreographer = Choreographer.getInstance()
-
-	fun queueCocosEvent(r: Runnable) {    
-    cocosEventQueue.add(r)
-    }
-
-	override fun doFrame(frameTimeNanos: Long){
-    
-    	val buffer = cocosEventQueue
-    
-    	cocosEventQueue = glEventQueue
-    	glEventQueue = buffer
-    
-    	cocosEventQueue.clear()
-    
-    	if (!glEventQueue.isEmpty()) {
-        
-     	   queueEvent {
-     	       glEventQueue.forEach { it -> it.run() }
-      	   }
-    	} 
-     
-    	requestRender()           
-    	choreographer.postFrameCallback(this)
     }
 }

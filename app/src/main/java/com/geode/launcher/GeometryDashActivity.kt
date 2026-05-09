@@ -5,7 +5,7 @@ import android.content.Intent
 import android.content.pm.ActivityInfo
 import android.content.pm.ApplicationInfo
 import android.content.pm.PackageInfo
-import android.opengl.GLSurfaceView
+import org.cocos2dx.lib.GLSurfaceView
 import android.os.Build
 import android.os.Bundle
 import android.os.Environment
@@ -584,7 +584,7 @@ class GeometryDashActivity : AppCompatActivity(), Cocos2dxHelper.Cocos2dxHelperL
     }
 
     override fun runOnGLThread(runnable: Runnable) {
-        mGLSurfaceView?.queueCocosEvent(runnable)
+        mGLSurfaceView?.queueEvent(runnable)
     }
 
     override fun showDialog(title: String, message: String) {
