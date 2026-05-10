@@ -34,23 +34,3 @@ jobs:
     - name: Build project
       run: |
         ./gradlew app:assemble${{ matrix.config.name }} 
-
-    - name: Upload release build
-      uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
-      if: ${{ matrix.config.lower == 'release' }}
-      with:
-        name: geode-launcher-${{ matrix.config.lower }}
-        path: |
-          ${{github.workspace}}/app/build/outputs/apk/${{ matrix.config.lower }}/app-universal-${{ matrix.config.lower }}-unsigned.apk
-
-          ${{ steps.rename_apk.outputs.path }}
-          ${{ steps.rename_mappings.outputs.path }}
-
-    - name: Upload debug build
-      uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
-      if: ${{ matrix.config.lower == 'debug' }}
-      with:
-        name: geode-launcher-${{ matrix.config.lower }}
-        path: |
-          ${{ steps.rename_apk_universal.outputs.path }}
-          ${{ steps.rename_apk.outputs.path }}
