@@ -270,11 +270,11 @@ fun FrameRateDialog(
             TextButton(
                 onClick = {
                     // automatically disable if already max
-                    if (currentValue == maxFrameRate) {
-                        onSelect(0)
-                    } else {
+                    //if (currentValue == maxFrameRate) {
+                    //    onSelect(0)
+                    //} else {
                         onSelect(currentValue ?: 0)
-                    }
+                    //}
                 },
                 enabled = !minimumReached && !maximumReached && currentValue != null
             ) {

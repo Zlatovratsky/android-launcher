@@ -4,11 +4,13 @@ import android.opengl.*;
 
 import android.content.Context;
 import android.util.AttributeSet;
+import android.view.Choreographer;
+import android.view.Choreographer.FrameCallback;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 import java.io.Writer;
 import java.lang.ref.WeakReference;
-import java.util.ArrayList;
+import java.util.ArrayDeque;
 
 import javax.microedition.khronos.egl.EGL10;
 import javax.microedition.khronos.egl.EGL11;
@@ -19,7 +21,7 @@ import javax.microedition.khronos.egl.EGLSurface;
 import javax.microedition.khronos.opengles.GL;
 import javax.microedition.khronos.opengles.GL10;
 
-public class GLSurfaceView extends SurfaceView implements SurfaceHolder.Callback2 {
+public class GLSurfaceView extends SurfaceView implements SurfaceHolder.Callback2{
     
     public final static int RENDERMODE_WHEN_DIRTY = 0;
 
@@ -516,7 +518,7 @@ public class GLSurfaceView extends SurfaceView implements SurfaceHolder.Callback
 
     }
     
-    static class GLThread extends Thread {
+    static class GLThread extends Thread implements Choreographer.FrameCallback{
         GLThread(WeakReference<GLSurfaceView> glSurfaceViewWeakRef) {
             super();
             mWidth = 0;
@@ -582,16 +584,20 @@ public class GLSurfaceView extends SurfaceView implements SurfaceHolder.Callback
                 Runnable event = null;
                 Runnable finishDrawingRunnable = null;
 
-                while (true) {
+                while (true) {                  
+                    swapEventBuffers();
+                    while (! mGLQueue.isEmpty()) {
+                        event = mGLQueue.poll();
+                        if (event != null) {
+                            event.run();
+                            event = null;
+                        }
+                    }
                     synchronized (sGLThreadManager) {
+
                         while (true) {
                             if (mShouldExit) {
                                 return;
-                            }
-
-                            if (! mEventQueue.isEmpty()) {
-                                event = mEventQueue.remove(0);
-                                break;
                             }
 
                             boolean pausing = false;
@@ -707,11 +713,6 @@ public class GLSurfaceView extends SurfaceView implements SurfaceHolder.Callback
                         }
                     }
 
-                    if (event != null) {
-                        event.run();
-                        event = null;
-                        continue;
-                    }
 
                     if (createEglSurface) {
                         if (mEglHelper.createSurface()) {
@@ -769,20 +770,23 @@ public class GLSurfaceView extends SurfaceView implements SurfaceHolder.Callback
                             } finally {}
                         }
                     }
-                    int swapError = mEglHelper.swap();
-                    switch (swapError) {
-                        case EGL10.EGL_SUCCESS:
-                            break;
-                        case EGL11.EGL_CONTEXT_LOST:
-                            lostEglContext = true;
-                            break;
-                        default:
+                    if (mRequestSwap) {
+                        mRequestSwap = false;
+                        int swapError = mEglHelper.swap();
+                        switch (swapError) {
+                            case EGL10.EGL_SUCCESS:
+                                break;
+                            case EGL11.EGL_CONTEXT_LOST:
+                                lostEglContext = true;
+                                break;
+                            default:
 
-                            synchronized(sGLThreadManager) {
-                                mSurfaceIsBad = true;
-                                sGLThreadManager.notifyAll();
-                            }
-                            break;
+                                synchronized(sGLThreadManager) {
+                                    mSurfaceIsBad = true;
+                                    sGLThreadManager.notifyAll();
+                                }
+                                break;
+                        }
                         
                     }
 
@@ -872,6 +876,7 @@ public class GLSurfaceView extends SurfaceView implements SurfaceHolder.Callback
                     }
                 }
             }
+            mChoreographer.postFrameCallback(this);
         }
 
         public void surfaceDestroyed() {
@@ -900,6 +905,7 @@ public class GLSurfaceView extends SurfaceView implements SurfaceHolder.Callback
                     }
                 }
             }
+            mChoreographer.removeFrameCallback(this);
         }
 
         public void onResume() {
@@ -916,6 +922,7 @@ public class GLSurfaceView extends SurfaceView implements SurfaceHolder.Callback
                     }
                 }
             }
+            mChoreographer.postFrameCallback(this);
         }
 
         public void onWindowResize(int w, int h) {
@@ -966,10 +973,10 @@ public class GLSurfaceView extends SurfaceView implements SurfaceHolder.Callback
             if (r == null) {
                 throw new IllegalArgumentException("r must not be null");
             }
-            synchronized(sGLThreadManager) {
+           // synchronized (sGLThreadManager) {
                 mEventQueue.add(r);
-                sGLThreadManager.notifyAll();
-            }
+           //     sGLThreadManager.notifyAll();
+           // }
         }
 
         private boolean mShouldExit;
@@ -989,17 +996,37 @@ public class GLSurfaceView extends SurfaceView implements SurfaceHolder.Callback
         private boolean mRequestRender;
         private boolean mWantRenderNotification;
         private boolean mRenderComplete;
-        private ArrayList<Runnable> mEventQueue = new ArrayList<Runnable>();
+        volatile private ArrayDeque<Runnable> mEventQueue = new ArrayDeque<Runnable>(16);
+        volatile private ArrayDeque<Runnable> mGLQueue = new ArrayDeque<Runnable>(16);
+        private ArrayDeque<Runnable> buffer = null;
+        volatile private boolean mRequestSwap;
         private boolean mSizeChanged = true;
         private Runnable mFinishDrawingRunnable = null;
+        
+        private static Choreographer mChoreographer = Choreographer.getInstance();
+        
+        @Override
+        public void doFrame(long frameTimeNanos) {
+            mRequestSwap = true;
+            mChoreographer.postFrameCallback(this);
+        }
+
+        private void swapEventBuffers() {
+            buffer = mEventQueue;
+            mEventQueue = mGLQueue;
+            mGLQueue = buffer;
+        }
 
 
         
         private EglHelper mEglHelper;
 
         private WeakReference<GLSurfaceView> mGLSurfaceViewWeakRef;
+        
 
+        
     }
+        
 
 
 
