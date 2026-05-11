@@ -46,6 +46,7 @@ import java.io.IOException
 import javax.microedition.khronos.egl.EGL10
 import javax.microedition.khronos.egl.EGLConfig
 import javax.microedition.khronos.egl.EGLDisplay
+import kotlin.math.roundToInt
 
 enum class DisplayMode {
     DEFAULT, LIMITED, FULLSCREEN;
@@ -472,7 +473,7 @@ class GeometryDashActivity : AppCompatActivity(), Cocos2dxHelper.Cocos2dxHelperL
         val frameRate = mLimitedRefreshRate
         if (frameRate != null) {
             renderer.limitFrameRate(frameRate)
-        } else {renderer.limitFrameRate(240)}
+        } else {renderer.limitFrameRate(this.getDisplay().getRefreshRate().roundToInt())}
 
         editText.inputType = InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_FLAG_NO_SUGGESTIONS
         glSurfaceView.cocos2dxEditText = editText

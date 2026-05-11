@@ -465,7 +465,7 @@ fun GameplaySettingsGroup() {
 
         val maxFrameRate = remember {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-                context.display.supportedModes.maxOf { it.refreshRate }
+                context.display.getRefreshRate()
             } else {
                 @Suppress("DEPRECATION")
                 (context.getSystemService(Context.WINDOW_SERVICE) as WindowManager).defaultDisplay.refreshRate
