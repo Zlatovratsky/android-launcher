@@ -891,6 +891,7 @@ public class GLSurfaceView extends SurfaceView implements SurfaceHolder.Callback
                     }
                 }
             }
+            mChoreographer.removeFrameCallback(this);
         }
 
         public void onPause() {
