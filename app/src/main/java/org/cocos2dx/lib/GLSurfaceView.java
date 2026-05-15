@@ -4,8 +4,6 @@ import android.opengl.*;
 
 import android.content.Context;
 import android.util.AttributeSet;
-import android.view.Choreographer;
-import android.view.Choreographer.FrameCallback;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 import java.io.Writer;
@@ -518,7 +516,7 @@ public class GLSurfaceView extends SurfaceView implements SurfaceHolder.Callback
 
     }
     
-    static class GLThread extends Thread implements Choreographer.FrameCallback{
+    static class GLThread extends Thread {
         GLThread(WeakReference<GLSurfaceView> glSurfaceViewWeakRef) {
             super();
             mWidth = 0;
@@ -770,25 +768,22 @@ public class GLSurfaceView extends SurfaceView implements SurfaceHolder.Callback
                             } finally {}
                         }
                     }
-                    if (mRequestSwap) {
-                        mRequestSwap = false;
-                        int swapError = mEglHelper.swap();
-                        switch (swapError) {
-                            case EGL10.EGL_SUCCESS:
-                                break;
-                            case EGL11.EGL_CONTEXT_LOST:
-                                lostEglContext = true;
-                                break;
-                            default:
+                    int swapError = mEglHelper.swap();
+                    switch (swapError) {
+                        case EGL10.EGL_SUCCESS:
+                            break;
+                        case EGL11.EGL_CONTEXT_LOST:
+                            lostEglContext = true;
+                            break;
+                        default:
 
-                                synchronized(sGLThreadManager) {
-                                    mSurfaceIsBad = true;
-                                    sGLThreadManager.notifyAll();
-                                }
-                                break;
+                            synchronized(sGLThreadManager) {
+                                mSurfaceIsBad = true;
+                                sGLThreadManager.notifyAll();
+                            }
+                            break;
                         }
                         
-                    }
 
                     if (wantRenderNotification) {
                         doRenderNotification = true;
@@ -876,7 +871,6 @@ public class GLSurfaceView extends SurfaceView implements SurfaceHolder.Callback
                     }
                 }
             }
-            mChoreographer.postFrameCallback(this);
         }
 
         public void surfaceDestroyed() {
@@ -891,7 +885,6 @@ public class GLSurfaceView extends SurfaceView implements SurfaceHolder.Callback
                     }
                 }
             }
-            mChoreographer.removeFrameCallback(this);
         }
 
         public void onPause() {
@@ -906,7 +899,6 @@ public class GLSurfaceView extends SurfaceView implements SurfaceHolder.Callback
                     }
                 }
             }
-            mChoreographer.removeFrameCallback(this);
         }
 
         public void onResume() {
@@ -923,7 +915,6 @@ public class GLSurfaceView extends SurfaceView implements SurfaceHolder.Callback
                     }
                 }
             }
-            mChoreographer.postFrameCallback(this);
         }
 
         public void onWindowResize(int w, int h) {
@@ -1000,17 +991,9 @@ public class GLSurfaceView extends SurfaceView implements SurfaceHolder.Callback
         volatile private ArrayDeque<Runnable> mEventQueue = new ArrayDeque<Runnable>(16);
         volatile private ArrayDeque<Runnable> mGLQueue = new ArrayDeque<Runnable>(16);
         private ArrayDeque<Runnable> buffer = null;
-        volatile private boolean mRequestSwap;
         private boolean mSizeChanged = true;
         private Runnable mFinishDrawingRunnable = null;
         
-        private static Choreographer mChoreographer = Choreographer.getInstance();
-        
-        @Override
-        public void doFrame(long frameTimeNanos) {
-            mRequestSwap = true;
-            mChoreographer.postFrameCallback(this);
-        }
 
         private void swapEventBuffers() {
             buffer = mEventQueue;
