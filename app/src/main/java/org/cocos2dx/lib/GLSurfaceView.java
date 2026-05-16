@@ -59,9 +59,6 @@ public class GLSurfaceView extends SurfaceView implements SurfaceHolder.Callback
         mPreserveEGLContextOnPause = preserveOnPause;
     }
 
-    /**
-     * @return true if the EGL context will be preserved when paused
-     */
     public boolean getPreserveEGLContextOnPause() {
         return mPreserveEGLContextOnPause;
     }
@@ -533,16 +530,11 @@ public class GLSurfaceView extends SurfaceView implements SurfaceHolder.Callback
             try {
                 guardedRun();
             } catch (InterruptedException e) {
-                // fall thru and exit normally
             } finally {
                 sGLThreadManager.threadExiting(this);
             }
         }
 
-        /*
-         * This private method should only be called inside a
-         * synchronized(sGLThreadManager) block.
-         */
         private void stopEglSurfaceLocked() {
             if (mHaveEglSurface) {
                 mHaveEglSurface = false;
@@ -550,10 +542,6 @@ public class GLSurfaceView extends SurfaceView implements SurfaceHolder.Callback
             }
         }
 
-        /*
-         * This private method should only be called inside a
-         * synchronized(sGLThreadManager) block.
-         */
         private void stopEglContextLocked() {
             if (mHaveEglContext) {
                 mEglHelper.finish();
@@ -965,10 +953,7 @@ public class GLSurfaceView extends SurfaceView implements SurfaceHolder.Callback
             if (r == null) {
                 throw new IllegalArgumentException("r must not be null");
             }
-           // synchronized (sGLThreadManager) {
-                mEventQueue.add(r);
-           //     sGLThreadManager.notifyAll();
-           // }
+            mEventQueue.add(r);
         }
 
         private boolean mShouldExit;

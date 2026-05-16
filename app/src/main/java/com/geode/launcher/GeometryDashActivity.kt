@@ -473,7 +473,10 @@ class GeometryDashActivity : AppCompatActivity(), Cocos2dxHelper.Cocos2dxHelperL
         val frameRate = mLimitedRefreshRate
         if (frameRate != null) {
             renderer.limitFrameRate(frameRate)
-        } else {renderer.limitFrameRate(this.getDisplay().getRefreshRate().roundToInt())}
+        } else {
+            val hardLimit = getDisplay().getRefreshRate().roundToInt()
+            renderer.limitFrameRate(hardLimit)
+        }
 
         editText.inputType = InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_FLAG_NO_SUGGESTIONS
         glSurfaceView.cocos2dxEditText = editText
